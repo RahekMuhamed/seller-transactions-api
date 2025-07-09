@@ -65,59 +65,64 @@ export const getTransactions = async (
     res.status(500).json({ error: "Something went wrong" });
   }
 };
-export const getTransactionsSummary = async (req: Request, res: Response) => {
-  try{
-    const token=req.headers["token"];
-    if (!token){
-      res.status(401).json({ error: "token is missing" });
-      return;
-    }
+// export const getTransactionsSummary = async (req: Request, res: Response) => {
+//   try{
+//     const token=req.headers["token"];
+//     if (!token){
+//       res.status(401).json({ error: "token is missing" });
+//       return;
+//     }
  
-    const { seller_id, date_range } = req.query;
+//     const { seller_id, date_range } = req.query;
 
-    if (!seller_id) {
-      res.status(400).json({ error: "seller_id is required" });
-      return;
-    }
+//     if (!seller_id) {
+//       res.status(400).json({ error: "seller_id is required" });
+//       return;
+//     }
 
-    const whereClause: any = {
-      seller_id: Number(seller_id),
-    };
+//     const whereClause: any = {
+//       seller_id: Number(seller_id),
+//     };
 
-    if (date_range) {
-      const [start, end] = (date_range as string).split(",");
-      whereClause.last_updated = {
-        [Op.between]: [new Date(start), new Date(end)],
-      };
-    }
-
-    const data = await Transaction.findAll({
-      where: whereClause,
-      attributes: [
-        [Sequelize.fn("DATE", Sequelize.col("last_updated")), "date"],
-        [Sequelize.fn("SUM", Sequelize.col("price")), "total_income"],
-      ],
-      group: [Sequelize.fn("DATE", Sequelize.col("last_updated"))],
-      raw: true,
-    }) as unknown as TransactionSummary[];
+//     if (date_range && typeof date_range === "string") {
+//       const [start, end] = date_range.split(",");
+//       if (start && end && !isNaN(Date.parse(start)) && !isNaN(Date.parse(end))) {
+//         whereClause.last_updated = {
+//           [Op.between]: [new Date(start), new Date(end)],
+//         };
+//       }
+//     }
     
 
-    const seller = await Seller.findByPk(Number(seller_id));
-    if (!seller) {
-      res.status(404).json({ error: "Seller not found" });
-      return;
-    }
+//     const data = await Transaction.findAll({
+//       where: whereClause,
+//       attributes: [
+//         [Sequelize.fn("DATE", Sequelize.col("last_updated")), "date"],
+//         [Sequelize.fn("SUM", Sequelize.col("price")), "total_income"],
+//       ],
+//       group: [Sequelize.fn("DATE", Sequelize.col("last_updated"))],
+//       order: [[Sequelize.fn("DATE", Sequelize.col("last_updated")), 'ASC']],
+//       raw: true,
+//     }) as unknown as TransactionSummary[];
+    
 
-    const result = data.map((item) => ({
-      date: item.date,
-      total_income: Number(item.total_income),
-      seller_name: seller.name,
-      seller_id: seller.id,
-    }));
+//     const seller = await Seller.findByPk(Number(seller_id));
+//     if (!seller) {
+//       res.status(404).json({ error: "Seller not found" });
+//       return;
+//     }
 
-    res.json({ data: { days: result } });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Something went wrong" });
-  }
-};
+//     const result = data.map((item) => ({
+//       date: item.date,
+//       total_income: Number(item.total_income),
+//       seller_name: seller.name,
+//       seller_id: seller.id,
+//     }));
+    
+
+//     res.json({ data: { days: result } });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Something went wrong" });
+//   }
+// };

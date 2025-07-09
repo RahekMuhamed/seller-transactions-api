@@ -1,32 +1,42 @@
 import { Request, Response } from "express";
 import { Transaction } from "../models/Transaction";
 import { Seller } from "../models/Seller";
-import { Op, fn, col, literal } from "sequelize";
+import { Op, fn, col, literal,Sequelize } from "sequelize";
 
-export const getTransactionsSummary = async (req: Request, res: Response):Promise<void> => {
-    try {
-        const token = req.headers["token"];
-        if (!token) {
-          res.status(401).json({ error: "token is missing" });
-          return;
-        }
+export const getTransactionsSummary = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const token = req.headers["token"];
+    if (!token) {
+      res.status(401).json({ error: "token is missing" });
+      return;
+    }
 
     const { seller_id, date_range } = req.query;
 
     if (!seller_id) {
-       res.status(400).json({ error: "seller_id is required" });
-       return;
+      res.status(400).json({ error: "seller_id is required" });
+      return;
     }
 
     const whereClause: any = {
       seller_id: Number(seller_id),
     };
 
-    if (date_range) {
-      const [start, end] = (date_range as string).split(",");
-      whereClause.last_updated = {
-        [Op.between]: [new Date(start), new Date(end)],
-      };
+    if (date_range && typeof date_range === "string") {
+      const [start, end] = date_range.split(",");
+      if (
+        start &&
+        end &&
+        !isNaN(Date.parse(start)) &&
+        !isNaN(Date.parse(end))
+      ) {
+        whereClause.last_updated = {
+          [Op.between]: [new Date(start), new Date(end)],
+        };
+      }
     }
 
     const summary = await Transaction.findAll({
@@ -37,6 +47,7 @@ export const getTransactionsSummary = async (req: Request, res: Response):Promis
       ],
       where: whereClause,
       group: [fn("DATE", col("last_updated")), "seller_id"],
+
       include: [
         {
           model: Seller,

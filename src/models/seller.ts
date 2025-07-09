@@ -1,10 +1,10 @@
 import { DataTypes,Model } from "sequelize";
 import { sequelize } from "../config/database";
-export class seller extends Model{
+export class Seller extends Model{
     public id!: number;
     name!: string;
   }
-  seller.init({
+  Seller.init({
     id: {
         type:DataTypes.INTEGER.UNSIGNED,
         autoIncrement: true,
@@ -20,3 +20,4 @@ export class seller extends Model{
     tableName: "sellers",
     timestamps: false,
   })
+  
