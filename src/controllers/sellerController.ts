@@ -4,7 +4,13 @@ import { Seller } from "../models/Seller";
 import { Op, fn, col, literal } from "sequelize";
 
 export const getTransactionsSummary = async (req: Request, res: Response):Promise<void> => {
-  try {
+    try {
+        const token = req.headers["token"];
+        if (!token) {
+          res.status(401).json({ error: "token is missing" });
+          return;
+        }
+
     const { seller_id, date_range } = req.query;
 
     if (!seller_id) {

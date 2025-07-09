@@ -66,7 +66,13 @@ export const getTransactions = async (
   }
 };
 export const getTransactionsSummary = async (req: Request, res: Response) => {
-  try {
+  try{
+    const token=req.headers["token"];
+    if (!token){
+      res.status(401).json({ error: "token is missing" });
+      return;
+    }
+ 
     const { seller_id, date_range } = req.query;
 
     if (!seller_id) {
