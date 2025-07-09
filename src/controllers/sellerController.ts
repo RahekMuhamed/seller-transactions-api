@@ -1,0 +1,55 @@
+import { Request, Response } from "express";
+import { Transaction } from "../models/Transaction";
+import { Seller } from "../models/Seller";
+import { Op, fn, col, literal } from "sequelize";
+
+export const getTransactionsSummary = async (req: Request, res: Response):Promise<void> => {
+  try {
+    const { seller_id, date_range } = req.query;
+
+    if (!seller_id) {
+       res.status(400).json({ error: "seller_id is required" });
+       return;
+    }
+
+    const whereClause: any = {
+      seller_id: Number(seller_id),
+    };
+
+    if (date_range) {
+      const [start, end] = (date_range as string).split(",");
+      whereClause.last_updated = {
+        [Op.between]: [new Date(start), new Date(end)],
+      };
+    }
+
+    const summary = await Transaction.findAll({
+      attributes: [
+        [fn("DATE", col("last_updated")), "date"],
+        [fn("SUM", col("price")), "total_income"],
+        "seller_id",
+      ],
+      where: whereClause,
+      group: [fn("DATE", col("last_updated")), "seller_id"],
+      include: [
+        {
+          model: Seller,
+          attributes: ["name"],
+        },
+      ],
+      order: [[literal("date"), "ASC"]],
+    });
+
+    const days = summary.map((item: any) => ({
+      date: item.get("date"),
+      total_income: item.get("total_income"),
+      seller_id: item.get("seller_id"),
+      seller_name: item.Seller.name,
+    }));
+
+    res.json({ data: { days } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
